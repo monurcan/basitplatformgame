@@ -1,7 +1,7 @@
 # basitplatformgame
 sfml + c++
 
-leftright
+leftright 2018
 
 dev: mok
 
