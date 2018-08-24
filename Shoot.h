@@ -19,7 +19,7 @@ private:
 	sf::Texture aimbgT;
 	sf::RectangleShape aimline;
 	std::vector<Bullet> bullets;
-	sf::RectangleShape gunc[5];
+	sf::RectangleShape gunc[2];
 	float theta;
 	char guncount;
 };

@@ -2,16 +2,17 @@
 
 
 Platform::Platform(const sf::Texture & text, const sf::Vector2f & size, const sf::Vector2f & position, bool move)
-	: inix(position.x), move(move), toright(1)
+	: inix(position.x), move(move), toright(true)
 {
 	body.setSize(size);
 	body.setTexture(&text);
+	body.setTextureRect(sf::IntRect(0, 0, size.x, size.y));
 	body.setOrigin(size / 2.0f);
 	body.setPosition(position);
 }
 
 Platform::Platform(const sf::Color &color, const sf::Vector2f & size, const sf::Vector2f & position, bool move)
-	: inix(position.x), move(move), toright(1)
+	: inix(position.x), move(move), toright(true)
 {
 	body.setSize(size);
 	body.setFillColor(color);

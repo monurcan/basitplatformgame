@@ -1,8 +1,8 @@
 #pragma once
 #include <SFML\Graphics.hpp>
 #include "Collider.h"
-#define MOVABLE_PLATFORM_SPEED 150.0f
-#define MOVABLE_PLATFORM_RANGE 150.0f
+constexpr float MOVABLE_PLATFORM_SPEED = 150.0f;
+constexpr float MOVABLE_PLATFORM_RANGE = 150.0f;
 
 class Platform
 {

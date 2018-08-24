@@ -6,7 +6,7 @@ Player::Player(const sf::Texture& text, const sf::Vector2u & size, float sw_time
 {
 	body.setOrigin(body.getSize() / 2.0f);
 	body.setTexture(&text);
-	//body.setPosition(2750, -160);
+	//body.setPosition(4550, -160);
 }
 
 
@@ -74,5 +74,6 @@ const bool Player::isFall() const
 
 Collider Player::getCollider()
 {
+	canJump = false;
 	return Collider(body);
 }

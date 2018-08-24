@@ -8,7 +8,7 @@ Shoot::Shoot(Player & player)
 	aim.setOrigin(sf::Vector2f(-25.0f, 50.0f));
 	aimline.setFillColor(sf::Color::Red);
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 2; i++) {
 		gunc[i] = sf::RectangleShape(sf::Vector2f(6, 14));
 		gunc[i].setFillColor(sf::Color(143, 125, 75));
 		gunc[i].setPosition(player.getPosition().x - 250 + i*9, player.getPosition().y + 250);
@@ -40,7 +40,7 @@ void Shoot::shoot() {
 
 void Shoot::charge()
 {
-	guncount = 5;
+	guncount = 2;
 }
 
 void Shoot::Update(float deltaTime, sf::RenderWindow & window)
