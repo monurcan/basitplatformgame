@@ -3,12 +3,7 @@ sudo: false
 matrix:
   include:
     - os: osx
-      compiler: clang
-      addons:
-        apt:
-          packages:
-            - clang-3.8
-            - libc++
+    - osx_image: xcode9.4
 cache:
   apt: true
   directories:
@@ -16,16 +11,6 @@ cache:
   - "deps/SFML/build/install"
   - "deps/SFML/build-static/install"
   - "deps/boost-install"
-
-before_install:
-  - if [ "$CC"  == "gcc"     ]; then export CC=gcc-5; fi
-  - if [ "$CXX" == "g++"     ]; then export CXX=g++-5; fi
-  - if [ "$CC"  == "clang"   ]; then export CC=clang-3.8; fi
-  - if [ "$CXX" == "clang++" ]; then export CXX=clang++-3.8; fi
-  - pushd . && cd $HOME
-  - git clone https://github.com/LB--/travis.git travis
-  - source "./travis/update-cmake.sh"
-  - popd
 
 install:
   - pushd .
