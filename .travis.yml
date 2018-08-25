@@ -14,8 +14,6 @@ addons:
     - g++-7
     - gcc-7
     - clang
-    sources:
-    - ubuntu-toolchain-r-test
 before_script:
 - git clone https://github.com/sfml/sfml && cd sfml && mkdir build && cd build &&
   cmake .. -G"$GENERATOR" $CMAKE_FLAGS
