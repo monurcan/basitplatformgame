@@ -1,56 +1,81 @@
 language: c++
 sudo: false
-matrix:
-  include:
-    - os: osx
-    - osx_image: xcode9.4
-cache:
-  apt: true
-  directories:
-  - "$HOME/.travis/cmake/build/install"
-  - "deps/SFML/build/install"
-  - "deps/SFML/build-static/install"
-  - "deps/boost-install"
-
-install:
-  - pushd .
-  # SFML 2.3 has new dependencies that Travis doesn't have
-  - cd deps/SFML
-  # Build SFML (dynamic)
-  - if [ ! -d "deps/SFML/build/install/lib" ]; then export REBUILD_SFML="yes"; else export REBUILD_SFML="no"; fi
-  - if [ "$REBUILD_SFML" == "yes" ]; then cd deps/SFML && rm -rf build && mkdir build && cd build; fi
-  - if [ "$REBUILD_SFML" == "yes" ]; then cmake .. -DCMAKE_INSTALL_PREFIX="$(pwd)/install" && cmake --build . && cmake --build . --target install; fi
-  - if [ "$REBUILD_SFML" == "yes" ]; then cd install/lib; fi
-  - if [ "$REBUILD_SFML" == "no"  ]; then cd deps/SFML/build/install/lib; fi
-  - export PATH="$(pwd):$PATH" && cd .. && export SFML_ROOT="$(pwd)"
-  - popd && pushd .
-  # Build SFML (static)
-  - if [ ! -d "deps/SFML/build-static/install/lib" ]; then export REBUILD_SFML_STATIC="yes"; else export REBUILD_SFML_STATIC="no"; fi
-  - if [ "$REBUILD_SFML_STATIC" == "yes" ]; then cd deps/SFML && rm -rf build-static && mkdir build-static && cd build-static; fi
-  - if [ "$REBUILD_SFML_STATIC" == "yes" ]; then cmake .. -DCMAKE_INSTALL_PREFIX="$(pwd)/install" -DBUILD_SHARED_LIBS=OFF && cmake --build . && cmake --build . --target install; fi
-  - if [ "$REBUILD_SFML_STATIC" == "yes" ]; then cd install; fi
-  - if [ "$REBUILD_SFML_STATIC" == "no"  ]; then cd deps/SFML/build-static/install; fi
-  - export SFML_STATIC_ROOT="$(pwd)"
-  - popd && pushd .
-  # Build Boost
-  - if [ ! -d "deps/boost-install/lib" ]; then export REBUILD_BOOST="yes"; else export REBUILD_BOOST="no"; fi
-  - cd deps
-  - if [ "$REBUILD_BOOST" == "yes" ]; then rm -rf boost && rm -rf boost-install; fi
-  - if [ "$REBUILD_BOOST" == "yes" ]; then git clone --quiet --recursive https://github.com/boostorg/boost.git boost; fi
-  - if [ "$REBUILD_BOOST" == "yes" ]; then cd boost && chmod +x bootstrap.sh; fi
-  - if [ "$REBUILD_BOOST" == "yes" ]; then ./bootstrap.sh --prefix="$(pwd)/../boost-install"; fi
-  - if [ "$REBUILD_BOOST" == "yes" ]; then ./b2 headers; fi
-  - if [ "$REBUILD_BOOST" == "yes" ]; then ./b2 toolset=gcc-5 cxxflags="-std=c++14" variant=release link=static --with-filesystem --with-system install -d0; fi
-  - if [ "$REBUILD_BOOST" == "no"  ]; then mkdir boost && cd boost; fi
-  - cd ../boost-install && export BOOST_ROOT="$(pwd)"
-  - popd
-
+addons:
+  apt:
+    packages:
+    - cmake
+    - libxrandr-dev
+    - libudev-dev
+    - libopenal-dev
+    - libflac-dev
+    - libvorbis-dev
+    - libenet-dev
+    - libgtk-3-dev
+    - g++-7
+    - gcc-7
+    - clang
+    sources:
+    - ubuntu-toolchain-r-test
+before_script:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/gcc
+  gcc /usr/bin/gcc-7 90; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/g++
+  g++ /usr/bin/g++-7 90; fi
+- git clone https://github.com/sfml/sfml && cd sfml && mkdir build && cd build &&
+  cmake .. -G"$GENERATOR" $CMAKE_FLAGS
+- sudo cmake --build . --target install
+- cd ../..
 script:
-  - mkdir build && cd build
-  - cmake .. -DSFML_ROOT="$SFML_ROOT" -DBOOST_ROOT="$BOOST_ROOT"
-  - cmake --build .
-  - ctest -VV
-  - cd .. && mkdir build-static && cd build-static
-  - cmake .. -DSFML_ROOT="$SFML_STATIC_ROOT" -DSFML_STATIC_LIBRARIES=ON -DBOOST_ROOT="$BOOST_ROOT"
-  - cmake --build .
-  - ctest -VV
+- mkdir build && cd build
+- cmake .. -DCMAKE_BUILD_TYPE=Release -G"$GENERATOR" $CMAKE_FLAGS
+- sudo cmake --build . --target install --config Release
+- sudo cmake --build . --target package --config Release
+- cd ../ && mkdir deploy
+- cp build/$PACKAGE_NAME deploy
+matrix:
+  fast_finish: true
+  include:
+  - os: linux
+    compiler: gcc
+    env:
+    - GENERATOR="Unix Makefiles"
+    - CMAKE_FLAGS=""
+    - PACKAGE_NAME="*.deb"
+  - os: linux
+    compiler: clang
+    env:
+    - GENERATOR="Unix Makefiles"
+    - CMAKE_FLAGS=""
+    - PACKAGE_NAME="*.deb"
+  - os: osx
+    osx_image: xcode9
+    env:
+    - GENERATOR="Xcode"
+    - CMAKE_FLAGS="-DSFML_BUILD_FRAMEWORKS=TRUE"
+    - PACKAGE_NAME="*.dmg"
+  - os: osx
+    osx_image: xcode9
+    env:
+    - GENERATOR="Xcode"
+    - CMAKE_FLAGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/iOS.toolchain.cmake"
+    - PACKAGE_NAME="*.dmg"
+  allow_failures:
+  - os: osx
+    osx_image: xcode9
+    env:
+    - GENERATOR="Xcode"
+    - CMAKE_FLAGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/iOS.toolchain.cmake"
+    - PACKAGE_NAME="*.dmg"
+deploy:
+  provider: releases
+  api_key:
+    secure: IdrgwqHbcqX+bhsWDuywNDaJ1gNQtKUzw9WQPat9oOntJlzTr4NHvpZQpHoa8INMC9HhqUz/VgnemD4OE9DDvXa88fvSe+SmxoMNzGPkpsCxtZQZwfA0IMdletiZ37UJGjFZBjNoK3xYQtEQ9sP8v5ZLP7NIAMb7Zfp8NCq1cvnOgBWQJNX38Q0lWO58dxuXQ2QPoyHI0B74uy4VQzkjImwVTy42HMsuqrMLfThJ1gWDlTNIaWnPU13C5hroZJUU3JN5OS1AQtRgLmPTpYfH4Oi5JQeXBaR4j34SsEx2zOT6Wefbc54u1KNHWtUTxjNdR39BL8PKArUzsiR8UsZTF5cs3r3FbtNjzA+RinqPncHFMC7HwrYXhBRv34MoBMYb+FI/14N/Gx7SC3Cx1vI/RtGd+ZFyWeZl5U/CgHfLB5eKP1tyZCjFwVC2ACd5p9tkFEvwZ/ProwXJM6GdCvv9Gb5IudkcmY3XTyCPvnuJEFd0NfUQKs6NvHWbDH9jbBz9Ei63Qdy8xA39tQ/MU8NQkISmZQaC0ptfZaWOYKJFG2v8S5QzZz8NJoQfAkHYht297yj/sLyNPO3DPVurB4snJbMkL0ulROTlDXaleNk0e6pvwnGRXq2L0VddhSyybtcTdn6xpwaA8aHq4ALSUkpyFGGb9FxLNpfFR00qumfuQbY=
+  file_glob: true
+  file: "deploy/$PACKAGE_NAME"
+  overwrite: true
+  skip_cleanup: true
+  prerelease: true
+  on:
+   tags: true
+
+    
